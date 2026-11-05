@@ -1,4 +1,5 @@
 [package]
+description = "A greeting: the example application of the Nexus staging index"
 owners = ["github:JeromeDaniel"]
 
 [[versions]]
@@ -14,3 +15,4 @@ checksum = "sha256:6ea4ebfda235dba32448eebb27881496f46f8e9e88aa1a0c919db16b9c7b6
 profile  = "release"
 abi      = "nexus-1.0.0-beta.1"
 signer   = "ed25519:f6c6ea2d352fefccba4e603ed9685727e85f1f611bc45430975b44c9a378c0db"
+programs = ["hello"]
