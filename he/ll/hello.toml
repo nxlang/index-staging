@@ -1,0 +1,5 @@
+[[versions]]
+version  = "0.1.0"
+source   = "git+https://github.com/nxlang/hello-nexus?tag=v0.1.0"
+resolved = "88b0e953b9fa3a48418c3286fa9f055146595be9"
+checksum = "nxsum2:c7bcdd865b8dfbb1f8d968d26d765ed9dae6789d67e5933f602a69bd4d83ad11"
