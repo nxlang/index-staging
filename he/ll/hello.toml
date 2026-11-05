@@ -6,9 +6,10 @@ version  = "0.1.0"
 source   = "git+https://github.com/nxlang/hello-nexus?tag=v0.1.0"
 resolved = "88b0e953b9fa3a48418c3286fa9f055146595be9"
 checksum = "nxsum2:c7bcdd865b8dfbb1f8d968d26d765ed9dae6789d67e5933f602a69bd4d83ad11"
+mirror   = "https://github.com/nxlang/index-staging/releases/download/hello/hello-0.1.0-src.tar.gz"
 
 [[versions.nxp]]
-urls     = ["https://github.com/nxlang/hello-nexus/releases/download/v0.1.0/hello-0.1.0.nxp"]
+urls     = ["https://github.com/nxlang/hello-nexus/releases/download/v0.1.0/hello-0.1.0.nxp", "https://github.com/nxlang/index-staging/releases/download/hello/hello-0.1.0.nxp"]
 checksum = "sha256:6ea4ebfda235dba32448eebb27881496f46f8e9e88aa1a0c919db16b9c7b60d1"
 profile  = "release"
 abi      = "nexus-1.0.0-beta.1"
