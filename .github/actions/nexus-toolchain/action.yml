@@ -1,0 +1,26 @@
+name: Nexus toolchain
+description: >
+  Installs the Nexus toolchain the index's checks run with (nxpkg spec 6.31 rule 4: the
+  latest published one), from the archive the repository variables name, checked against
+  its SHA-256. The archive holds `bin/` (nvm, nxpkg, nxc, ...) and `lib/` (the standard
+  library), as a built toolchain's directory does.
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        URL: ${{ vars.NEXUS_TOOLCHAIN_URL }}
+        SHA256: ${{ vars.NEXUS_TOOLCHAIN_SHA256 }}
+      run: |
+        set -euo pipefail
+        [ -n "$URL" ] && [ -n "$SHA256" ] || { echo "NEXUS_TOOLCHAIN_URL and NEXUS_TOOLCHAIN_SHA256 must both be set"; exit 1; }
+        dir="$RUNNER_TEMP/nexus"
+        mkdir -p "$dir"
+        curl -fsSL --retry 3 -o "$RUNNER_TEMP/nexus.tar.gz" "$URL"
+        echo "$SHA256  $RUNNER_TEMP/nexus.tar.gz" | sha256sum -c -
+        tar -xzf "$RUNNER_TEMP/nexus.tar.gz" -C "$dir"
+        top="$(find "$dir" -maxdepth 2 -type d -name bin | head -1 | xargs dirname)"
+        echo "NEXUS_STD_BIN=$top/bin" >>"$GITHUB_ENV"
+        echo "NEXUS_STD_LIB=$top/lib" >>"$GITHUB_ENV"
+        echo "$top/bin" >>"$GITHUB_PATH"
+        "$top/bin/nxpkg" --version

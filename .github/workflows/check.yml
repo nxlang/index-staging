@@ -1,0 +1,35 @@
+# The checks of a pull request to the index (nxpkg spec 5.10 rules 2 to 4 and 8, 6.31).
+#
+# Inactive until the repository variable NEXUS_TOOLCHAIN_URL is set (with
+# NEXUS_TOOLCHAIN_SHA256): the toolchain's archive, public once the language's sources
+# are (Nexus-Lab NXPKG_OFFICIAL_INDEX_PROPOSAL.md, lot X2).
+#
+# Safety: `pull_request`, never `pull_request_target`: the job has no secret and a
+# read-only token, even for a fork's pull request. `index check` compiles the new
+# versions without running their build steps; nothing of the pull request is executed.
+name: check
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  index:
+    if: vars.NEXUS_TOOLCHAIN_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/nexus-toolchain
+      - name: nxpkg index check
+        run: nxpkg index check . --base "${{ github.event.pull_request.base.sha }}" --verify-build
+      - name: Ownership
+        env:
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: sh .github/scripts/owners.sh "${{ github.event.pull_request.base.sha }}" "$AUTHOR"

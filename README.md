@@ -24,7 +24,8 @@ require-signature = true
 
 - `index.toml`: the index's name and rules (`require-signature`: every built package is
   signed).
-- one file per package, `<name>.toml`: its owners, its signing keys, its versions (each
+- one file per package, at a path made from its name (`he/ll/hello.toml`, as
+  crates.io lays out its index), and `names`, the list of every package; each file: its owners, its signing keys, its versions (each
   with its public git source, commit and `nxsum2` checksum, and its built packages).
 
 Packages are added by pull request (`nxpkg publish`); the checks run
@@ -37,5 +38,19 @@ Packages are added by pull request (`nxpkg publish`); the checks run
   signing keys, is reviewed by a person.
 - Reserved: the standard library's module names, `std`, `nexus`, and names one edit away
   from an existing one unless a person accepts it.
+
+## Automation
+
+- `.github/workflows/check.yml`: on every pull request, `nxpkg index check --base
+  <base> --verify-build` and the ownership check (`.github/scripts/owners.sh`); a new
+  name, or a change of owners or signing keys, is flagged for a person. No secret, a
+  read-only token, nothing of the pull request executed.
+- `.github/workflows/periodic.yml`: every Monday, `nxpkg index check --remote`, its
+  report kept, an issue opened on a problem.
+
+Both are **inactive until the toolchain is public**: they run once the repository
+variables `NEXUS_TOOLCHAIN_URL` and `NEXUS_TOOLCHAIN_SHA256` name its archive. Changes to
+`.github/` are pushed by the organisation, not by pull request (`index check` accepts
+only the packages' files, `names` and `index.toml` in one).
 
 Security: see [SECURITY.md](SECURITY.md).
