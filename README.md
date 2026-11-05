@@ -49,8 +49,11 @@ Packages are added by pull request (`nxpkg publish`); the checks run
   index mirror-archive`) and built packages copied to this repository's releases (one
   per package), and named in `mirror` and `urls` (`.github/scripts/mirror.sh`, which
   also runs by hand with `gh` logged in).
-- `.github/workflows/periodic.yml`: every Monday, `nxpkg index check --remote`, its
-  report kept, an issue opened on a problem.
+- `.github/workflows/periodic.yml`: every Monday, `nxpkg index check --remote` (every
+  URL downloaded and checksummed, the mirror included), its report kept; one issue per
+  package with a problem, addressed to its owners, closed once fixed; after four weeks,
+  an original URL that a mirror backs is removed from `urls`
+  (`.github/scripts/report.sh`).
 
 Both are **inactive until the toolchain is public**: they run once the repository
 variables `NEXUS_TOOLCHAIN_URL` and `NEXUS_TOOLCHAIN_SHA256` name its archive. Changes to

@@ -1,18 +1,18 @@
-# The periodic check (nxpkg spec 5.10 rule 6): every original URL of every built
-# package and source mirror, and every git source's tag, with `nxpkg index check
-# --remote`; its report published as the run's summary and kept 90 days; a problem
-# opens (or updates) an issue.
+# The periodic check (nxpkg spec 5.10 rule 6): every URL of every built package and
+# source mirror downloaded and checksummed, and every git source's tag, with `nxpkg
+# index check --remote` -- each week the whole mirror too, which covers the monthly
+# check. Its report is the run's summary, kept 90 days; then .github/scripts/report.sh:
+# one issue per package with a problem, addressed to its owners, closed once fixed;
+# after four weeks, an original URL that a mirror backs is removed from `urls`.
 #
 # Inactive until the repository variable NEXUS_TOOLCHAIN_URL is set (see check.yml).
-# Not yet: the issue addressed to each package's owners, and the removal of an
-# original URL after four weeks without a fix (rule 6), the monthly check of the mirror.
 name: periodic
 on:
   schedule:
     - cron: "17 4 * * 1"     # every Monday, 04:17 UTC
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
   issues: write
 jobs:
   remote:
@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          fetch-depth: 0
       - uses: ./.github/actions/nexus-toolchain
       - name: nxpkg index check --remote
         id: remote
@@ -36,13 +36,18 @@ jobs:
           name: report
           path: report.txt
           retention-days: 90
-      - name: Open or update the issue
-        if: steps.remote.outputs.status != '0'
+      - name: Issues, and the URLs gone four weeks
         env:
           GH_TOKEN: ${{ github.token }}
-          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REPO: ${{ github.repository }}
         run: |
-          title="Periodic check: a URL or a tag is not ok"
-          body="$(printf 'The periodic check of %s found problems (%s):\n\n```\n%s\n```\n' "$(date -u +%F)" "$RUN" "$(grep -v '^ok ' report.txt)")"
-          number="$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number')"
-          if [ -n "$number" ]; then gh issue comment "$number" --body "$body"; else gh issue create --title "$title" --body "$body"; fi
+          set -eu
+          gh label create periodic -R "$REPO" --color d93f0b --description "The periodic check found a problem" --force >/dev/null
+          sh .github/scripts/report.sh report.txt
+          if ! git diff --quiet; then
+            git config user.name "nxlang-index"
+            git config user.email "nxlang-index@users.noreply.github.com"
+            git commit -qam "periodic: an original URL gone four weeks removed (the mirror remains)"
+            nxpkg index check . --base HEAD~1
+            git push origin HEAD:main
+          fi
