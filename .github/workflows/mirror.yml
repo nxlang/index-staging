@@ -1,0 +1,49 @@
+# The mirror (nxpkg spec 5.10 rule 5): after a merge, the sources and the built packages
+# of the packages it changed are copied to this repository's releases (one release per
+# package, staging's deviation from nxlang/nxp-mirror), and named in the index, in a
+# commit of its own. A push by this workflow's token starts no other workflow.
+#
+# Inactive until the repository variable NEXUS_TOOLCHAIN_URL is set (see check.yml).
+# By hand: Actions -> mirror -> Run workflow mirrors every package.
+name: mirror
+on:
+  push:
+    branches: [main]
+    paths: ["**.toml", "!index.toml", "!.github/**"]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: mirror
+  cancel-in-progress: false
+jobs:
+  mirror:
+    if: vars.NEXUS_TOOLCHAIN_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/nexus-toolchain
+      - name: Mirror
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -eu
+          if [ "${{ github.event_name }}" = workflow_dispatch ] || ! git cat-file -e "$BEFORE" 2>/dev/null; then
+            files="$(git ls-files '*.toml' | grep -v -e '^index.toml$' -e '^\.github/')"
+          else
+            files="$(git diff --name-only "$BEFORE" HEAD -- '*.toml' | grep -v -e '^index.toml$' -e '^\.github/' || true)"
+          fi
+          [ -n "$files" ] || { echo "no package changed"; exit 0; }
+          sh .github/scripts/mirror.sh $files
+          if ! git diff --quiet; then
+            git config user.name "nxlang-index"
+            git config user.email "nxlang-index@users.noreply.github.com"
+            git commit -qam "mirror: $(echo $files | xargs -n1 basename | sed 's/\.toml$//' | tr '\n' ' ')"
+            nxpkg index check . --base HEAD~1
+            git push origin HEAD:main
+          fi

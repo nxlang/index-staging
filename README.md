@@ -45,6 +45,10 @@ Packages are added by pull request (`nxpkg publish`); the checks run
   <base> --verify-build` and the ownership check (`.github/scripts/owners.sh`); a new
   name, or a change of owners or signing keys, is flagged for a person. No secret, a
   read-only token, nothing of the pull request executed.
+- `.github/workflows/mirror.yml`: after a merge, each new version's sources (`nxpkg
+  index mirror-archive`) and built packages copied to this repository's releases (one
+  per package), and named in `mirror` and `urls` (`.github/scripts/mirror.sh`, which
+  also runs by hand with `gh` logged in).
 - `.github/workflows/periodic.yml`: every Monday, `nxpkg index check --remote`, its
   report kept, an issue opened on a problem.
 
