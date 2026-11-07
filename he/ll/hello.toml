@@ -22,3 +22,11 @@ version  = "0.1.1"
 source   = "git+https://github.com/nxlang/hello-nexus.git?tag=v0.1.1"
 resolved = "88673b59329399398df91ea53662fb7218d7fc14"
 checksum = "nxsum2:7d88ed4635989e82d16137ef8a191bdd6159563be93601356342e0d5efbf410a"
+
+[[versions.nxp]]
+urls     = ["https://github.com/nxlang/hello-nexus/releases/download/v0.1.1/hello-0.1.1.nxp"]
+checksum = "sha256:b6c32286a541c65845445db89db0da2b9bf54980baef75c6fc1fd199dbc144d1"
+profile  = "release"
+abi      = "nexus-1.0.0-beta.1"
+signer   = "ed25519:f6c6ea2d352fefccba4e603ed9685727e85f1f611bc45430975b44c9a378c0db"
+programs = ["hello"]
