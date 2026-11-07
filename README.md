@@ -42,9 +42,11 @@ Packages are added by pull request (`nxpkg publish`); the checks run
 ## Automation
 
 - `.github/workflows/check.yml`: on every pull request, `nxpkg index check --base
-  <base> --verify-build` and the ownership check (`.github/scripts/owners.sh`); a new
-  name, or a change of owners or signing keys, is flagged for a person. No secret, a
-  read-only token, nothing of the pull request executed.
+  <base> --verify-build` in two passes, everything downloaded first (`--fetch-only`),
+  then the builds with no network at all (`--offline`, in an empty network namespace:
+  `.github/scripts/offline.sh`), and the ownership check (`.github/scripts/owners.sh`);
+  a new name, or a change of owners or signing keys, is flagged for a person. No
+  secret, a read-only token, nothing of the pull request executed.
 - `.github/workflows/mirror.yml`: after a merge, each new version's sources (`nxpkg
   index mirror-archive`) and built packages copied to this repository's releases (one
   per package), and named in `mirror` and `urls` (`.github/scripts/mirror.sh`, which

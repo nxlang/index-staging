@@ -6,7 +6,8 @@
 #
 # Safety: `pull_request`, never `pull_request_target`: the job has no secret and a
 # read-only token, even for a fork's pull request. `index check` compiles the new
-# versions without running their build steps; nothing of the pull request is executed.
+# versions without running their build steps; nothing of the pull request is executed,
+# and the builds run with no network (.github/scripts/offline.sh).
 name: check
 on:
   pull_request:
@@ -27,8 +28,14 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: ./.github/actions/nexus-toolchain
-      - name: nxpkg index check
-        run: nxpkg index check . --base "${{ github.event.pull_request.base.sha }}" --verify-build
+      # Two passes (nxpkg spec 6.31 rule 6): everything the check downloads first, then
+      # the builds with no network at all (5.10 rule 8).
+      - name: nxpkg index check, fetching
+        run: nxpkg index check . --base "${{ github.event.pull_request.base.sha }}" --verify-build --fetch-only --work "$RUNNER_TEMP/index-check"
+      - name: The network is cut
+        run: sh .github/scripts/offline.sh sh -c 'if getent hosts github.com >/dev/null; then echo "the network is reachable"; exit 1; fi'
+      - name: nxpkg index check, building without the network
+        run: sh .github/scripts/offline.sh nxpkg index check . --base "${{ github.event.pull_request.base.sha }}" --verify-build --offline --work "$RUNNER_TEMP/index-check"
       - name: Ownership
         env:
           AUTHOR: ${{ github.event.pull_request.user.login }}
